@@ -7492,6 +7492,21 @@ def decompose_triage_task(
                     {"parent": parent_id, "child": child_id},
                 )
 
+        # Snapshot the root's ORIGINAL parents now, BEFORE the children are
+        # linked as parents of the root below. Reading task_links after that
+        # step returns the children themselves, and inheriting those turns
+        # the graph into a full clique (every child waits on every sibling
+        # and on itself) — measured 2026-09-08 on the localllm board: 6 todo,
+        # 0 ready, dispatch promoted nothing.
+        child_set = set(child_ids)
+        root_parents = [
+            r["parent_id"] for r in conn.execute(
+                "SELECT parent_id FROM task_links WHERE child_id = ?",
+                (task_id,),
+            ).fetchall()
+            if r["parent_id"] not in child_set and r["parent_id"] != task_id
+        ]
+
         # Link the ROOT task as a child of every leaf child — i.e. the
         # root waits for the whole graph. Simpler than computing leaves:
         # link root under every child. Cycle-free because the root is
@@ -7508,15 +7523,10 @@ def decompose_triage_task(
         # children that have no upstream at all, recompute_ready()
         # promotes them, and they run BEFORE the task they were meant to
         # follow — measured 2026-09-08 on the genai board (t_670d6826 →
-        # 5 children ran ahead of M6). Every parent of the root becomes a
-        # parent of every child; the root→child direction is never
-        # inserted, so the cycle-freedom argument above still holds.
-        root_parents = [
-            r["parent_id"] for r in conn.execute(
-                "SELECT parent_id FROM task_links WHERE child_id = ?",
-                (task_id,),
-            ).fetchall()
-        ]
+        # 5 children ran ahead of M6). Every ORIGINAL parent of the root
+        # (snapshot above) becomes a parent of every child; the
+        # root→child direction is never inserted, so the cycle-freedom
+        # argument above still holds.
         for pid in root_parents:
             for cid in child_ids:
                 conn.execute(
