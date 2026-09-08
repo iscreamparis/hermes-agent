@@ -5996,6 +5996,32 @@ def _cleanup_worktree_workspace(
                 task_id, wp,
             )
             return
+        # A reparse point inside the worktree is a loaded gun: `git worktree
+        # remove` follows a Windows JUNCTION as if it were a directory and
+        # deletes THROUGH it. On 2026-09-06 that emptied two sibling source
+        # repositories, reached via `<worktree>/app/node_modules` (a junction to
+        # the primary tree) and npm's own `file:` junctions inside it. The only
+        # trace was this function's own "worktree remove failed" warning.
+        # Unlink every link first — never resolve or follow one — and refuse to
+        # remove at all if any cannot be unlinked.
+        try:
+            from hermes_cli.reparse_guard import assert_safe_to_remove
+            blockers = assert_safe_to_remove(wp)
+            if blockers:
+                _log.warning(
+                    "Preserving worktree for task %s: %d link(s) under %s could "
+                    "not be unlinked, and removing through one would delete "
+                    "their targets: %s",
+                    task_id, len(blockers), wp,
+                    ", ".join(str(b) for b in blockers[:5]),
+                )
+                return
+        except Exception as exc:  # guard unavailable — preserve, never guess
+            _log.warning(
+                "Preserving worktree for task %s: link guard failed (%s)",
+                task_id, exc,
+            )
+            return
         # No --force: the dirty/unpushed checks above run before removal, so
         # git's own dirty guard re-verifies at removal time. If the tree
         # became dirty between our check and the removal (TOCTOU), removal
@@ -7476,6 +7502,31 @@ def decompose_triage_task(
                 "VALUES (?, ?)",
                 (cid, task_id),
             )
+
+        # The root's OWN parents gate its children too. Without this a
+        # gated root (e.g. "M6-followup, waits on M6") decomposes into
+        # children that have no upstream at all, recompute_ready()
+        # promotes them, and they run BEFORE the task they were meant to
+        # follow — measured 2026-09-08 on the genai board (t_670d6826 →
+        # 5 children ran ahead of M6). Every parent of the root becomes a
+        # parent of every child; the root→child direction is never
+        # inserted, so the cycle-freedom argument above still holds.
+        root_parents = [
+            r["parent_id"] for r in conn.execute(
+                "SELECT parent_id FROM task_links WHERE child_id = ?",
+                (task_id,),
+            ).fetchall()
+        ]
+        for pid in root_parents:
+            for cid in child_ids:
+                conn.execute(
+                    "INSERT OR IGNORE INTO task_links (parent_id, child_id) "
+                    "VALUES (?, ?)",
+                    (pid, cid),
+                )
+                _append_event(
+                    conn, cid, "linked", {"parent": pid, "child": cid, "inherited_from_root": task_id},
+                )
 
         # Flip the root: triage -> todo, set assignee to the orchestrator.
         sets = ["status = 'todo'"]
