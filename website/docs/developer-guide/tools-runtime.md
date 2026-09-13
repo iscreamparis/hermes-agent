@@ -205,6 +205,34 @@ The terminal tool integrates a dangerous-command approval system defined in `too
 
 5. **Permanent allowlist** — the "allow permanently" option writes the pattern to `config.yaml`'s `command_allowlist`, persisting across sessions.
 
+## Symlink/junction guards (`tools/link_escape_guard.py`)
+
+Two unconditional rules run in `_pre_exec_block`, *before* the approval layer, so neither
+`force=True` nor yolo/`approvals.mode: off` can bypass them:
+
+1. **No link creation by the agent** — `ln -s`, `mklink` (any switch), PowerShell
+   `New-Item -ItemType SymbolicLink|Junction|HardLink`, and the scripted `os.symlink` /
+   `fs.symlink` spellings are refused outright. npm (`file:` deps, workspaces) and git still
+   create the links a project legitimately needs; only the agent typing one by hand is blocked.
+2. **No recursive delete that escapes the work tree through a link** — when
+   `detect_dangerous_command` classifies the command as a recursive/destructive delete, each
+   path operand is resolved on the real filesystem (`realpath`, plus the NTFS reparse tag so
+   junctions are seen on the 3.11 floor). If the operand *is* a link, sits *under* one, or
+   *contains* one that resolves outside the command's working directory, the command is
+   refused with the source path and the resolved out-of-tree path named explicitly.
+
+Rule 2 makes no distinction between links: an npm `node_modules/@scope/pkg -> ../../other-repo`
+link blocks a `rm -rf node_modules` just as an agent-made junction would. The rule is not "good
+link vs bad link", it is "a recursive delete never leaves its working directory". Removing the
+link *without* recursion (`rm <link>`, `rmdir <link>`) stays allowed, and recursive deletes of
+real in-tree paths (`rm -rf dist`) are untouched. Filesystem inspection applies to the local
+backend only — a remote path resolved against this host would be meaningless — while the
+creation rule is text-only and applies everywhere.
+
+Same principle as `_validate_delete_target` / `_is_path_redirect` in
+`tools/skill_manager_guards.py` (port of Kilo Code #11227), applied to shell commands instead of
+a skill directory. Manual real-conditions check: `python scripts/verify_link_guard_manual.py`.
+
 ## Terminal/runtime environments
 
 The terminal system supports multiple backends:

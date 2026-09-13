@@ -243,6 +243,49 @@ def gateway_lifecycle_block(
     return None
 
 
+def link_guard_block(
+    *,
+    command: str,
+    cwd: str,
+    workdir: Optional[str],
+    session_key: str,
+    inspect_filesystem: bool = True,
+) -> Optional[str]:
+    """Refuse symlink/junction creation, and any recursive delete that escapes the working
+    directory through a link.
+
+    Two cumulative rules (``tools/link_escape_guard.py``): an agent never creates a link
+    itself, and a recursive delete never leaves its working directory by following one —
+    regardless of who created that link (npm ``file:`` deps and git create legitimate ones;
+    the guard does not try to tell "good" links from "bad", it only refuses to let a
+    recursive delete walk out of the tree). Unconditional: like the gateway-lifecycle and
+    self-repo guards it runs before the approval layer, so ``force=True``/yolo cannot bypass
+    it.
+
+    ``inspect_filesystem`` is False for non-local backends: the delete rule resolves paths on
+    THIS host, and a remote/container path either does not exist here (silent no-op) or names
+    an unrelated local path (false positive). The creation rule is text-only and applies to
+    every backend. Returns the JSON error string when blocked, else None.
+    """
+    from tools.link_escape_guard import check_link_guards, detect_link_creation
+    from tools.terminal_tool import _resolve_command_cwd
+
+    if not inspect_filesystem:
+        creates, description = detect_link_creation(command)
+        if not creates:
+            return None
+        from tools.link_escape_guard import LINK_CREATION_ADVICE
+        message = f"Blocked: {description}. {LINK_CREATION_ADVICE}"
+    else:
+        guard_cwd = _resolve_command_cwd(workdir=workdir, default_cwd=cwd, session_key=session_key)
+        message = check_link_guards(command, guard_cwd)
+    if not message:
+        return None
+    logger.warning("Blocked link guard: %s (command: %s)", message[:200],
+                   _safe_command_preview(command))
+    return _blocked_json(message, "blocked")
+
+
 def self_repo_block(
     *,
     command: str,
