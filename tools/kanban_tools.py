@@ -82,6 +82,55 @@ def _is_dispatcher_owned_worker() -> bool:
         return True
 
 
+def _reject_live_chat_nontriage_create(triage: bool, trivial_ops: bool) -> Optional[str]:
+    """Guard against a live messaging session (Discord/Telegram/Slack/...)
+    creating a development task outside triage.
+
+    Root cause (2026-09, card t_845147f3): a Discord gateway session called
+    ``kanban_create`` with no ``triage`` flag for a multi-day feature build,
+    landing it directly in ``ready`` with an assignee. The pipeline that is
+    supposed to flesh out the spec and fan it into reviewable sub-tasks
+    (``triage_specifier`` / ``kanban_decomposer``, both pinned to Opus) never
+    ran, so a monolithic worker started immediately on an under-specified
+    brief. This was an agent judgement lapse, not a forced tool path — the
+    ``discord-code-task-model-picker`` skill already documented a
+    triage-first workflow — but nothing enforced it, so it depended on the
+    agent remembering every time.
+
+    This is a TECHNICAL guard, not just a skill instruction: any live
+    messaging surface (identified via
+    ``gateway.session_context.session_is_messaging_surface`` — the same
+    check the codebase already uses to distinguish "a human is reading a
+    chat message" from "a machine-owned surface") must pass ``triage=true``
+    to create a task, unless it explicitly opts out with
+    ``trivial_ops=true`` for genuinely trivial, non-development asks (e.g.
+    archiving a card, a one-line ops toggle). Dispatcher-owned workers and
+    orchestrator fan-out are unaffected: the dispatcher strips every
+    session-context env var before spawning a worker subprocess
+    (``hermes_cli/kanban_db.py`` — ``for key in _VAR_MAP: env.pop(key,
+    None)``), so a worker or orchestrator task can never present as a
+    messaging surface here.
+    """
+    if triage or trivial_ops:
+        return None
+    try:
+        from gateway.session_context import session_is_messaging_surface
+
+        if not session_is_messaging_surface():
+            return None
+    except Exception:
+        return None
+    return tool_error(
+        "kanban_create refused: this session is a live messaging surface "
+        "(Discord/Telegram/Slack/...). Development/code tasks created from "
+        "chat must land in triage so the specifier/decomposer pipeline "
+        "fleshes out and reviews the spec before any worker runs — pass "
+        "triage=true. If this really is a trivial, non-development ops "
+        "task (e.g. archiving a card, a one-line toggle), pass "
+        "trivial_ops=true to create it directly instead."
+    )
+
+
 def _reject_delegated_child_mutation(tool_name: str) -> Optional[str]:
     """Deny Kanban mutations from delegate_task children.
 
@@ -1378,6 +1427,15 @@ def _handle_create(args: dict, **kw) -> str:
             "assignee is required — name the profile that should execute this "
             "task (the dispatcher will only spawn tasks with an assignee)"
         )
+    triage_arg, triage_bool_error = _parse_bool_arg(args, "triage")
+    if triage_bool_error:
+        return tool_error(triage_bool_error)
+    trivial_ops_arg, trivial_ops_bool_error = _parse_bool_arg(args, "trivial_ops")
+    if trivial_ops_bool_error:
+        return tool_error(trivial_ops_bool_error)
+    chat_guard_err = _reject_live_chat_nontriage_create(triage_arg, trivial_ops_arg)
+    if chat_guard_err:
+        return chat_guard_err
     body = args.get("body")
     parents = args.get("parents") or []
     tenant = args.get("tenant") or os.environ.get("HERMES_TENANT")
@@ -1411,9 +1469,6 @@ def _handle_create(args: dict, **kw) -> str:
     _inherit_project = workspace_kind is None and workspace_path is None
     if workspace_kind is None:
         workspace_kind = "scratch"
-    triage, bool_error = _parse_bool_arg(args, "triage")
-    if bool_error:
-        return tool_error(bool_error)
     idempotency_key = args.get("idempotency_key")
     max_runtime_seconds = args.get("max_runtime_seconds")
     initial_status = args.get("initial_status") or "running"
@@ -1465,7 +1520,7 @@ def _handle_create(args: dict, **kw) -> str:
                 workspace_path=workspace_path,
                 project_id=project_id,
                 project_source_task_id=project_source_task_id,
-                triage=triage,
+                triage=triage_arg,
                 idempotency_key=idempotency_key,
                 max_runtime_seconds=(
                     int(max_runtime_seconds)
@@ -2239,6 +2294,20 @@ KANBAN_CREATE_SCHEMA = {
                     "If true, task lands in 'triage' instead of 'todo' "
                     "— a specifier profile is expected to flesh out "
                     "the body before work starts."
+                ),
+            },
+            "trivial_ops": {
+                "type": "boolean",
+                "description": (
+                    "Set true ONLY to bypass the triage requirement for a "
+                    "genuinely trivial, non-development ops task (e.g. "
+                    "archiving a card, a one-line config toggle) created "
+                    "from a live chat/messaging session (Discord/Telegram/"
+                    "Slack/...). Any development/code task created from a "
+                    "messaging session MUST instead pass triage=true — "
+                    "kanban_create refuses a non-triage create from a "
+                    "messaging surface unless one of the two is set. "
+                    "Ignored (no effect) outside a messaging session."
                 ),
             },
             "idempotency_key": {

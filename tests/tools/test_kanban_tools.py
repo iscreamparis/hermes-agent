@@ -416,6 +416,64 @@ def test_create_happy_path(worker_env):
         conn.close()
 
 
+def test_create_from_messaging_surface_without_triage_is_rejected(monkeypatch, worker_env):
+    """Root-cause guard for t_845147f3: a Discord (or any live chat) session
+    must not create a dev task directly outside triage."""
+    monkeypatch.setenv("HERMES_SESSION_PLATFORM", "discord")
+    from tools import kanban_tools as kt
+    out = kt._handle_create({
+        "title": "feature build",
+        "assignee": "peer",
+    })
+    d = json.loads(out)
+    assert d.get("ok") is not True
+    assert "triage" in d.get("error", "").lower()
+
+
+def test_create_from_messaging_surface_with_triage_succeeds(monkeypatch, worker_env):
+    monkeypatch.setenv("HERMES_SESSION_PLATFORM", "discord")
+    from tools import kanban_tools as kt
+    out = kt._handle_create({
+        "title": "feature build",
+        "assignee": "peer",
+        "triage": True,
+    })
+    d = json.loads(out)
+    assert d["ok"] is True
+    from hermes_cli import kanban_db as kb
+    conn = kb.connect()
+    try:
+        child = kb.get_task(conn, d["task_id"])
+        assert child.status == "triage"
+    finally:
+        conn.close()
+
+
+def test_create_from_messaging_surface_with_trivial_ops_bypasses_triage(monkeypatch, worker_env):
+    monkeypatch.setenv("HERMES_SESSION_PLATFORM", "discord")
+    from tools import kanban_tools as kt
+    out = kt._handle_create({
+        "title": "archive an old card",
+        "assignee": "peer",
+        "trivial_ops": True,
+    })
+    d = json.loads(out)
+    assert d["ok"] is True
+
+
+def test_create_from_non_messaging_surface_without_triage_still_works(monkeypatch, worker_env):
+    """CLI / dispatcher-owned / orchestrator surfaces are unaffected."""
+    monkeypatch.delenv("HERMES_SESSION_PLATFORM", raising=False)
+    monkeypatch.setenv("HERMES_SESSION_SOURCE", "kanban")
+    from tools import kanban_tools as kt
+    out = kt._handle_create({
+        "title": "child task",
+        "assignee": "peer",
+    })
+    d = json.loads(out)
+    assert d["ok"] is True
+
+
 def test_link_happy_path(worker_env):
     from hermes_cli import kanban_db as kb
     conn = kb.connect()
