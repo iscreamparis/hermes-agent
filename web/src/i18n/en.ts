@@ -380,6 +380,7 @@ export const en: Translations = {
     modelInherit: "Inherit from clone / default",
     modelLoading: "Loading models…",
     modelNone: "No model providers are set up yet. Add an API key under Keys or sign in to a provider under Models.",
+    modelLoadFailed: "Could not load models",
     editModel: "Change model",
     modelSaved: "Model updated",
     modelSelect: "Select a model",

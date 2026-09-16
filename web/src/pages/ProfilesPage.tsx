@@ -302,6 +302,8 @@ export default function ProfilesPage() {
       modelLoading: p.modelLoading ?? "Loading models…",
       modelNone:
         p.modelNone ?? "No model providers are set up yet. Add an API key under Keys or sign in to a provider under Models.",
+      modelLoadFailed:
+        p.modelLoadFailed ?? "Could not load models",
       editModel: p.editModel ?? "Change model",
       modelSaved: p.modelSaved ?? "Model updated",
       modelSelect: p.modelSelect ?? "Select a model",
@@ -326,6 +328,9 @@ export default function ProfilesPage() {
   const [modelChoices, setModelChoices] = useState<
     { provider: string; model: string; label: string }[] | null
   >(null);
+  const [modelChoicesError, setModelChoicesError] = useState<string | null>(
+    null,
+  );
   const modelChoicesLoading = useRef(false);
   const [modelChoice, setModelChoice] = useState("");
   const closeCreateModal = useCallback(() => setCreateModalOpen(false), []);
@@ -386,9 +391,17 @@ export default function ProfilesPage() {
             });
           }
         }
+        setModelChoicesError(null);
         setModelChoices(flat);
       })
-      .catch(() => setModelChoices([]))
+      .catch((err) => {
+        // An empty list and a FAILED request are different problems: reporting the
+        // request failure as "no authenticated providers" sends the reader hunting
+        // for a credential that is usually fine (a stale dashboard token after a
+        // gateway restart 401s here). Keep the real reason.
+        setModelChoicesError(String(err?.message || err));
+        setModelChoices([]);
+      })
       .finally(() => {
         modelChoicesLoading.current = false;
       });
@@ -920,7 +933,11 @@ export default function ProfilesPage() {
                 </Select>
 
                 {modelChoices !== null && modelChoices.length === 0 && (
-                  <p className="text-xs text-muted-foreground">{L.modelNone}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {modelChoicesError
+                      ? `${L.modelLoadFailed}: ${modelChoicesError}`
+                      : L.modelNone}
+                  </p>
                 )}
               </div>
 
@@ -1276,7 +1293,11 @@ export default function ProfilesPage() {
             >
               {editorKind === "model" &&
                 (modelChoices !== null && modelChoices.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">{L.modelNone}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {modelChoicesError
+                      ? `${L.modelLoadFailed}: ${modelChoicesError}`
+                      : L.modelNone}
+                  </p>
                 ) : (
                   <>
                     <Select
