@@ -447,6 +447,7 @@ export interface Translations {
     modelInherit?: string;
     modelLoading?: string;
     modelNone?: string;
+    modelLoadFailed?: string;
     editModel?: string;
     modelSaved?: string;
     modelSelect?: string;
