@@ -21,6 +21,7 @@ from fastapi.testclient import TestClient
 
 from hermes_cli import kanban_db as kb
 from hermes_cli import kanban_db_connect as kbc
+from hermes_cli import kanban_db_notify as kbn
 
 
 # ---------------------------------------------------------------------------
@@ -1066,6 +1067,38 @@ def test_home_channels_lists_only_platforms_with_home(client, with_home_channels
     )
     for h in r.json()["home_channels"]:
         assert h["subscribed"] is False
+
+
+def test_home_subscribe_records_truthful_chat_type(client, with_home_channels):
+    """A home channel is a shared destination, never a paired DM: the stored
+    notify sub must carry ``group`` (bare channel) or ``thread`` (topic pinned by
+    /sethome). Regression: subscribe_home omitted chat_type, the column defaulted
+    to ``dm``, and the notifier rebuilt a DM-scoped session that delivered to the
+    bare channel instead of the originating thread."""
+    conn = kbc.connect()
+    try:
+        task = kb.create_task(conn, title="notify me", assignee="x")
+    finally:
+        conn.close()
+
+    for platform in ("discord", "telegram"):
+        r = client.post(f"/api/plugins/kanban/tasks/{task}/home-subscribe/{platform}")
+        assert r.status_code == 200, r.text
+
+    conn = kbc.connect()
+    try:
+        subs = {s["platform"]: s for s in kbn.list_notify_subs(conn, task)}
+    finally:
+        conn.close()
+
+    assert set(subs) == {"discord", "telegram"}
+    for platform, sub in subs.items():
+        assert sub["chat_type"] != "dm", (
+            f"{platform} home sub stored as a DM: {sub}")
+    # discord's home is a bare guild channel; telegram's home pins thread 42.
+    assert subs["discord"]["chat_type"] == "group"
+    assert subs["telegram"]["chat_type"] == "thread"
+    assert subs["telegram"]["thread_id"] == "42"
 
 
 # ---------------------------------------------------------------------------

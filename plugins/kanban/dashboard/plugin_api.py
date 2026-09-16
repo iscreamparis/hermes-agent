@@ -1142,6 +1142,15 @@ def _home_for_platform(platform: str, detail: str) -> dict:
     return home
 
 
+def _home_chat_type(home: dict) -> str:
+    """Truthful ``chat_type`` for a home channel. A home is a shared destination on
+    every platform (a Discord guild channel, a Telegram group, a Slack channel) — never
+    a paired DM — so it is ``"thread"`` when /sethome pinned a topic/thread and
+    ``"group"`` otherwise. Letting this default to ``"dm"`` made the notifier rebuild a
+    DM-scoped session and deliver to the bare channel instead of the thread."""
+    return "thread" if (home.get("thread_id") or "").strip() else "group"
+
+
 @router.get("/home-channels")
 def get_home_channels(task_id: Optional[str] = Query(None), board: Optional[str] = Query(None)):
     """Every platform with a home channel plus whether *task_id* (if given) is
@@ -1170,7 +1179,8 @@ def subscribe_home(task_id: str, platform: str, board: Optional[str] = Query(Non
         _require_task(conn, task_id)
         kbn.add_notify_sub(
             conn, task_id=task_id, platform=platform, chat_id=home["chat_id"],
-            thread_id=home["thread_id"] or None, notifier_profile=_active_profile_name())
+            thread_id=home["thread_id"] or None, chat_type=_home_chat_type(home),
+            notifier_profile=_active_profile_name())
         return {"ok": True, "task_id": task_id, "home_channel": home}
 
 
