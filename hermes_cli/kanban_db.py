@@ -1094,14 +1094,62 @@ def _host_prefix() -> str:
 
 # --- Task creation / mutation ---
 
+# Vendors whose models are covered by a flat-rate subscription here. Routing one of
+# these through a metered reseller (OpenRouter, ...) pays per token for something the
+# subscription already covers — a real incident: a tracer card pinned
+# ``anthropic/claude-opus-4.8`` with ``provider=openrouter`` and burned 1.68M billed
+# tokens while claude-opus-5 sat unused on the Anthropic plan.
+_SUBSCRIPTION_MODEL_PREFIXES = {
+    "anthropic": ("claude",),
+    "openai-codex": ("gpt-5", "gpt-6", "o1", "o3", "o4"),
+}
+# Resellers that bill per token. A model reached through one of these is cash.
+_METERED_RESELLERS = {"openrouter", "nous", "openai-api", "deepinfra", "together"}
+
+
+def _reject_metered_subscription_model(model: str, provider: str) -> None:
+    """Raise when ``provider`` meters a model the local subscriptions already cover.
+
+    Matched on the vendor prefix of a namespaced id (``anthropic/claude-opus-4.8``)
+    so a rename or a new point release stays covered. Non-namespaced ids and models
+    from vendors we hold no subscription for pass through untouched.
+    """
+    if provider.lower() not in _METERED_RESELLERS or "/" not in model:
+        return
+    vendor, _, bare = model.partition("/")
+    vendor, bare = vendor.lower(), bare.lower()
+    for sub_provider, prefixes in _SUBSCRIPTION_MODEL_PREFIXES.items():
+        matches_vendor = vendor == sub_provider or (
+            sub_provider == "anthropic" and vendor == "anthropic"
+        )
+        if matches_vendor and any(bare.startswith(p) for p in prefixes):
+            raise ValueError(
+                f"refusing model_override {model!r} via {provider!r}: {vendor} models are "
+                f"covered by your {sub_provider} subscription, and this route bills per "
+                f"token. Use provider={sub_provider!r} with the subscription's model "
+                f"instead, or set kanban.allow_metered_override=true to override."
+            )
+
+
 def _validate_model_override(model: Optional[str], provider: Optional[str]) -> tuple[Optional[str], Optional[str]]:
     """Strip both; a provider without a model is rejected (a bare ``--provider``
     would re-resolve the profile's model against another backend — exactly
-    the mismatch the override exists to kill)."""
+    the mismatch the override exists to kill). A subscription-covered model
+    pinned to a metered reseller is refused unless explicitly allowed."""
     model = (model or "").strip() or None
     provider = (provider or "").strip() or None
     if provider and not model:
         raise ValueError("provider_override requires a model_override")
+    if model and provider:
+        allow = False
+        try:
+            from hermes_cli.config import load_config
+            cfg = load_config() or {}
+            allow = bool((cfg.get("kanban") or {}).get("allow_metered_override", False))
+        except Exception:
+            allow = False  # unreadable config keeps the protective default
+        if not allow:
+            _reject_metered_subscription_model(model, provider)
     return model, provider
 
 
