@@ -87,6 +87,25 @@ def _validate_children_graph(children: list) -> None:
         raise ValueError("cyclic dependency detected in decomposed children list")
 
 
+_ROOT_COORDINATION_BODY = """**This is a coordination task, not an implementation task.**
+
+This card was decomposed into {n} child tasks, which have now all completed. The
+work is already done and committed by them — your job is to VERIFY and close out,
+NOT to build it again.
+
+**Do this**
+- Read each child's result summary above (## Parent task results) and its comments.
+- Verify the combined outcome actually holds: run the build/tests, check the
+  feature end to end, confirm the children's commits are present.
+- If everything holds, complete this task with a short summary of what shipped.
+
+**Do NOT**
+- Do NOT re-implement, refactor or "improve" what the children delivered.
+- Do NOT start new work that was not asked for. If you find a genuine gap, say so
+  in your summary (or file a new task) instead of fixing it here.
+"""
+
+
 def decompose_triage_task(
     conn: sqlite3.Connection, task_id: str, *, root_assignee: Optional[str], children: list[dict],
     author: Optional[str] = None, auto_promote: bool = True,
@@ -115,7 +134,7 @@ def decompose_triage_task(
     now = int(time.time())
     with write_txn(conn):
         root_row = conn.execute(
-            "SELECT id, status, tenant, workspace_kind, workspace_path "
+            "SELECT id, status, tenant, workspace_kind, workspace_path, body "
             "FROM tasks WHERE id = ?", (task_id,),
         ).fetchone()
         if root_row is None or root_row["status"] != "triage":
@@ -147,6 +166,15 @@ def decompose_triage_task(
         if root_assignee is not None:
             sets.append("assignee = ?")
             params.append(root_assignee)
+        # A root woken with only its original one-line title reads as an OPEN bug
+        # report, so a capable model re-implements what its children already
+        # shipped. The root is a COORDINATION task: say so in its body, once, at
+        # decompose time. Only fills an EMPTY body — a user-written brief is never
+        # overwritten.
+        root_body = (root_row["body"] if "body" in root_row.keys() else None) or ""
+        if not root_body.strip():
+            sets.append("body = ?")
+            params.append(_ROOT_COORDINATION_BODY.format(n=len(child_ids)))
         params.append(task_id)
         conn.execute(f"UPDATE tasks SET {', '.join(sets)} WHERE id = ?", tuple(params))
         if author and author.strip():
