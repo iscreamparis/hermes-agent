@@ -573,6 +573,21 @@ def _set_worker_activity_callback(agent) -> None:
 _TOOL_ACTIVITY_HEARTBEAT_INTERVAL_S = 30.0
 
 
+def _note_kanban_progress() -> None:
+    """Signal real forward progress to the kanban auto-heartbeat bridge.
+
+    A completed tool call is genuine progress; the keepalive thread stamping
+    ``_touch_activity`` mid-tool is NOT. Keeping the two distinct is what lets
+    the dispatcher reclaim a worker wedged inside a single tool call.
+    Best-effort: never raise into the agent loop.
+    """
+    try:
+        from tools.kanban_tools import note_agent_progress
+        note_agent_progress()
+    except Exception:
+        pass
+
+
 def _run_tool_activity_heartbeat(
     agent,
     stop_event: threading.Event,
@@ -1033,6 +1048,7 @@ def _commit_tool_result(
             logger.warning("Tool %s returned error (%.2fs): %s", function_name, tool_duration, error_preview(function_result))
         elif success_log_chars is not None:
             logger.info("tool %s completed (%.2fs, %d chars)", function_name, tool_duration, success_log_chars)
+            _note_kanban_progress()
         if not blocked:
             try:
                 agent._record_file_mutation_result(
@@ -1259,6 +1275,7 @@ class _ConcurrentBatch:
             logger.info(
                 "tool %s completed (%.2fs, %d chars)", ref.name, duration, result_chars
             )
+            _note_kanban_progress()
         return _ToolOutcome(ref, result, duration, is_error, blocked)
 
     def run_worker(self, index: int, start_order: int) -> None:

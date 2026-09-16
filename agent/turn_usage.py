@@ -207,6 +207,12 @@ def record_response_usage(
         prompt_tokens, completion_tokens, total_tokens,
         api_duration, _cache_pct, _ident,
     )
+    # A completed model round-trip is real forward progress: refresh the kanban
+    # auto-heartbeat so a long-thinking worker stays alive on the board, while a
+    # worker wedged inside one tool (no round-trips) correctly goes stale.
+    with suppress(Exception):
+        from tools.kanban_tools import note_agent_progress
+        note_agent_progress()
     # nous.anthropic_wire=auto: the session's wire is decided once, from this first response.
     if agent.session_api_calls == 1 and (agent.provider or "") == "nous":
         with suppress(Exception):

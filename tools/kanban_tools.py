@@ -435,16 +435,47 @@ def _goal_gate(tool_name: str, task, tid: str, evidence: str) -> None:
 _AUTO_HEARTBEAT_MIN_INTERVAL_SECONDS = 60.0
 _auto_heartbeat_last_attempt: float = 0.0
 
+# A heartbeat must mean "the AGENT is making progress", not "a thread is alive".
+# ``_touch_activity`` is also stamped by the tool-activity keepalive thread, which
+# ticks while a single tool call is WEDGED — so a worker stuck inside one tool
+# heartbeats forever and the dispatcher's stale check (which reads
+# ``last_heartbeat_at``) can never reclaim it. Observed live: a worker sat 28min
+# with zero model calls while heartbeating every 60s.
+#
+# Fix: the bridge additionally requires real agent progress — a model round-trip
+# or a COMPLETED tool call since the last heartbeat. Activity that is only the
+# keepalive thread no longer refreshes the board, so a genuinely wedged worker
+# goes stale and the watchdog reclaims it, while a slow-but-working one (long
+# builds between real tool completions) keeps beating as before.
+_agent_progress_counter: int = 0
+_auto_heartbeat_last_progress: int = -1
+
+
+def note_agent_progress() -> None:
+    """Mark real forward progress (model round-trip or completed tool call).
+
+    Cheap and lock-free: the counter only needs to CHANGE between heartbeats,
+    so a torn read across threads is harmless.
+    """
+    global _agent_progress_counter
+    _agent_progress_counter += 1
+
 
 def heartbeat_current_worker_from_env() -> bool:
     """Claim extension + board heartbeat for the current worker; True iff a write was
     attempted. ``HERMES_KANBAN_RUN_ID`` pins the run row so a reclaimed stale run is not
     heartbeated; ``HERMES_KANBAN_CLAIM_LOCK`` absent -> default claimer (local workers)."""
-    global _auto_heartbeat_last_attempt
+    global _auto_heartbeat_last_attempt, _auto_heartbeat_last_progress
     tid = os.environ.get("HERMES_KANBAN_TASK")
     now = time.monotonic()
     if not tid or (now - _auto_heartbeat_last_attempt) < _AUTO_HEARTBEAT_MIN_INTERVAL_SECONDS:
         return False
+    # Require real progress since the previous heartbeat: a keepalive thread
+    # ticking inside a wedged tool must NOT keep the board looking healthy.
+    progress = _agent_progress_counter
+    if progress == _auto_heartbeat_last_progress:
+        return False
+    _auto_heartbeat_last_progress = progress
     _auto_heartbeat_last_attempt = now
     try:
         from hermes_cli import kanban_db_dispatch as kbd
