@@ -62,11 +62,17 @@ Output a single JSON object with this exact shape:
   }
 
 Rules:
-  - "parents" is a list of INDICES (0-based) into this same "tasks" list,
-    expressing actual data dependencies. Tasks with no parents run in
-    PARALLEL. Tasks with parents wait until every parent completes.
-  - Prefer parallelism. If two tasks can be done independently, give
-    them no parents so the dispatcher fans them out at once.
+  - "parents" is a list of INDICES (0-based) into this same "tasks" list.
+    A task waits until every parent completes.
+  - ORDER THE TASKS AS A STRICT CHAIN. Task 0 has "parents": [], task 1 has
+    "parents": [0], task 2 has "parents": [1], and so on — every task depends
+    on the one before it. NEVER emit two tasks that can start at the same
+    time: children of one idea touch the same files, and two workers running
+    in parallel will collide, duplicate work, and overwrite each other.
+    There is no rush — a correct serial chain always beats a fast race.
+  - Order the chain so each step builds on the last: investigate/understand
+    first, then the change it enables, then dependent changes, then tests
+    and verification last.
   - Use 2-6 tasks for normal work. Don't create 20 tiny tasks. Don't
     cram everything into 1 task.
   - Pick assignees from the roster by matching the task to the profile's
@@ -229,6 +235,61 @@ def _apply_single(task: kb.Task, parsed: dict, routing: _Routing, author: str) -
     return DecomposeOutcome(task.id, True, "single task (no fanout)", fanout=False, new_title=title_val)
 
 
+def _chainify(children: list[dict], task_id: str) -> list[dict]:
+    """Force the children into a STRICT SERIAL CHAIN and return them re-ordered.
+
+    House rule: one triage idea fans out into dependent tasks only, never
+    parallel ones. Children of a single idea touch the same files, so two
+    workers dispatched at once collide, duplicate work and overwrite each
+    other. There is no rush — a correct serial chain always beats a race.
+
+    The LLM's declared dependencies are respected as ORDERING intent: we
+    topologically sort by them (stable, so the model's own order breaks ties),
+    then overwrite ``parents`` so child *i* waits on child *i-1*. The result is
+    a single path, which is by construction acyclic, so the DB's own cycle
+    check can never reject what we produce here.
+    """
+    n = len(children)
+    if n <= 1:
+        return children
+
+    # Kahn, stable: among the currently-available nodes always take the one the
+    # model listed first, so a model that already emitted a sane order keeps it.
+    indeg = [0] * n
+    for idx, child in enumerate(children):
+        indeg[idx] = len(set(child.get("parents") or []))
+    adj: list[list[int]] = [[] for _ in range(n)]
+    for idx, child in enumerate(children):
+        for p in set(child.get("parents") or []):
+            adj[p].append(idx)
+
+    order: list[int] = []
+    available = [i for i in range(n) if indeg[i] == 0]
+    while available:
+        cur = min(available)          # stable: lowest original index first
+        available.remove(cur)
+        order.append(cur)
+        for nxt in adj[cur]:
+            indeg[nxt] -= 1
+            if indeg[nxt] == 0:
+                available.append(nxt)
+    if len(order) != n:               # cycle in the model's graph: fall back to its order
+        seen = set(order)
+        order.extend(i for i in range(n) if i not in seen)
+        logger.info("decompose: task %s had a cycle in declared parents — using emitted order", task_id)
+
+    was_parallel = sum(1 for c in children if not (c.get("parents") or []))
+    chained = [dict(children[src]) for src in order]
+    for pos, child in enumerate(chained):
+        child["parents"] = [] if pos == 0 else [pos - 1]
+    if was_parallel > 1 or order != list(range(n)):
+        logger.info(
+            "decompose: task %s serialised into a %d-step chain (%d children had no parents)",
+            task_id, n, was_parallel,
+        )
+    return chained
+
+
 def _clean_children(task_id: str, raw_tasks: list, routing: _Routing) -> tuple[list[dict], str]:
     """Validate/normalise the LLM's ``tasks`` list; ``(children, "")`` or ``([], reason)``.
     Unknown assignees route to the default; never assignee=None."""
@@ -260,7 +321,8 @@ def _clean_children(task_id: str, raw_tasks: list, routing: _Routing) -> tuple[l
             # Drop non-int, out-of-range and self parent indices.
             "parents": [p for p in parents if isinstance(p, int) and 0 <= p < len(raw_tasks) and p != idx],
         })
-    return children, ""
+    # House rule: dependent chain only, never parallel siblings.
+    return _chainify(children, task_id), ""
 
 
 def _apply_fanout(task_id: str, parsed: dict, routing: _Routing, author: str) -> DecomposeOutcome:
