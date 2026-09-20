@@ -1,0 +1,10 @@
+=== hermes gateway status ===
+✗ Gateway is not running
+
+To start:
+  hermes gateway run      # Run in foreground
+  hermes gateway install  # Install as Windows Scheduled Task (auto-start on login)
+
+=== hermes dashboard --status ===
+1 hermes dashboard/serve process(es) running:
+    PID 43028 [dashboard]: C:\Users\kevin\AppData\Local\hermes\bin\hermes dashboard

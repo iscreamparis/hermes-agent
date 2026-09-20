@@ -1,0 +1,11 @@
+Kanban dependency inheritance smoke proof: PASS
+
+Isolated temporary HERMES_HOME: C:\Users\kevin\AppData\Local\Temp\hermes-kanban-dependency-proof-pb7mcolj\.hermes
+The temporary directory was removed after the run; no configured board was opened.
+Primary real links: 9
+Claims blocked before P completed: {'entry_a': True, 'entry_b': True}
+Claims successful after P completed: {'entry_a': True, 'entry_b': True, 'dependent': True, 'R': True, 'downstream': True}
+Primary final statuses: {'P': 'done', 'R': 'done', 'downstream': 'done', 'entry_a': 'done', 'entry_b': 'done', 'dependent': 'done'}
+Nested inner entry after outer prerequisite chain completed: ready
+
+Full task ids, links, and status snapshots: proof.json

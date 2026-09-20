@@ -1,0 +1,18 @@
+=== Live Hermes processes (wmic, 2026-09-20 ~02:47 UTC+2, worker session) ===
+
+PID 43028 [dashboard]
+  .hermes-runtime\python\cpython-3.11-windows-x86_64-none\python.exe
+    C:\Users\kevin\AppData\Local\hermes\bin\hermes.exe dashboard
+  Parent: 50316
+  => machine-level web dashboard; imports hermes_cli from this working tree.
+
+PID 29688 [gateway, orchestrator profile]
+  .hermes-runtime\python\cpython-3.11-windows-x86_64-none\python.exe
+    C:\Users\kevin\AppData\Local\hermes\hermes-agent\venv\Scripts\hermes.exe -p orchestrator gateway run
+  Parent: 32
+  => orchestrator-profile gateway (kanban dispatcher / auto-decompose / notifier);
+     imports hermes_cli from this working tree. NOTE: `hermes gateway status` (default
+     profile) reports "Gateway is not running" — that is profile-scoped; the
+     orchestrator gateway above IS running (operator-identified, wmic-verified).
+
+No default-profile gateway, no serve (desktop) process observed at scan time.

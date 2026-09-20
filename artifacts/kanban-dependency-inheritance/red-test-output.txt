@@ -1,0 +1,231 @@
+▶ running per-file parallel test suite via run_tests_parallel.py
+  (TZ=UTC LANG=C.UTF-8 PYTHONHASHSEED=0; clean env)
+▶ pre-compiling bytecode cache
+▶ launching test runner
+Discovered 1 test files (~6 tests) under ['tests\\hermes_cli\\test_kanban_decompose_db.py']; running with -j 48
+[100.0% |     6/~6 | ✓3 | ✗3] ✗ tests\hermes_cli\test_kanban_decompose_db.py (3✓ 3✗, 9.5s)
+
+  ╔╍ Failed: tests\hermes_cli\test_kanban_decompose_db.py ╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+  ║ INFO     hermes_cli.plugins:plugins.py:371 Plugin 'browser-browserbase' registered browser provider: browserbase
+  ║ INFO     hermes_cli.plugins:plugins.py:371 Plugin 'browser-firecrawl' registered browser provider: firecrawl
+  ║ INFO     hermes_cli.plugins:plugins.py:371 Plugin 'deepinfra' registered image_gen provider: deepinfra
+  ║ INFO     hermes_cli.plugins:plugins.py:371 Plugin 'fal' registered image_gen provider: fal
+  ║ INFO     hermes_cli.plugins:plugins.py:371 Plugin 'krea' registered image_gen provider: krea
+  ║ INFO     hermes_cli.plugins:plugins.py:371 Plugin 'meta-ai-image-gen' registered image_gen provider: meta-ai
+  ║ INFO     hermes_cli.plugins:plugins.py:371 Plugin 'openai' registered image_gen provider: openai
+  ║ INFO     hermes_cli.plugins:plugins.py:371 Plugin 'openai-codex' registered image_gen provider: openai-codex
+  ║ INFO     hermes_cli.plugins:plugins.py:371 Plugin 'openrouter' registered image_gen provider: openrouter
+  ║ INFO     hermes_cli.plugins:plugins.py:371 Plugin 'openrouter' registered image_gen provider: nous
+  ║ INFO     hermes_cli.plugins:plugins.py:371 Plugin 'xai' registered image_gen provider: xai
+  ║ INFO     hermes_cli.plugins:plugins.py:371 Plugin 'deepinfra' registered video_gen provider: deepinfra
+  ║ INFO     hermes_cli.plugins:plugins.py:371 Plugin 'fal' registered video_gen provider: fal
+  ║ INFO     hermes_cli.plugins:plugins.py:371 Plugin 'xai' registered video_gen provider: xai
+  ║ INFO     hermes_cli.plugins:plugins.py:371 Plugin 'web-brave-free' registered web provider: brave-free
+  ║ INFO     hermes_cli.plugins:plugins.py:371 Plugin 'web-ddgs' registered web provider: ddgs
+  ║ INFO     hermes_cli.plugins:plugins.py:371 Plugin 'web-exa' registered web provider: exa
+  ║ INFO     hermes_cli.plugins:plugins.py:371 Plugin 'web-firecrawl' registered web provider: firecrawl
+  ║ INFO     hermes_cli.plugins:plugins.py:371 Plugin 'web-keenable' registered web provider: keenable
+  ║ INFO     hermes_cli.plugins:plugins.py:371 Plugin 'web-parallel' registered web provider: parallel
+  ║ INFO     hermes_cli.plugins:plugins.py:371 Plugin 'web-perplexity' registered web provider: perplexity
+  ║ INFO     hermes_cli.plugins:plugins.py:371 Plugin 'web-searxng' registered web provider: searxng
+  ║ INFO     hermes_cli.plugins:plugins.py:371 Plugin 'web-tavily' registered web provider: tavily
+  ║ INFO     hermes_cli.plugins:plugins.py:371 Plugin 'web-xai' registered web provider: xai
+  ║ INFO     hermes_cli.plugins:plugins.py:1308 Plugin discovery complete: 57 found, 51 enabled
+  ║ =========================== short test summary info ===========================
+  ║ FAILED tests/hermes_cli/test_kanban_decompose_db.py::test_decompose_preserves_external_prerequisites_across_the_workgraph
+  ║ FAILED tests/hermes_cli/test_kanban_decompose_db.py::test_nested_decompose_preserves_transitive_external_prerequisites
+  ║ FAILED tests/hermes_cli/test_kanban_decompose_db.py::test_decompose_auto_promote_false_keeps_inherited_entries_in_todo
+  ║ ========================= 3 failed, 3 passed in 2.25s =========================
+  ║
+  ║  Repro: python -m pytest tests\hermes_cli\test_kanban_decompose_db.py -v
+  ╚╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+
+
+=== Summary: 1 files, 3 tests passed, 3 failed (100% complete) in 9.5s (48 workers) ===
+  Durations cached to test_durations.json (1 files)
+
+=== Per-file subprocess time distribution ===
+  Files:   1
+  Total subprocess CPU-wall: 9.5s  (runner wall: 9.5s, parallelism: 48x)
+  P50: 9.53s  P90: 9.53s  P95: 9.53s  P99: 9.53s  Max: 9.53s
+  <1s: 0 files (0%)  <2s: 0 files (0%)
+  Top 10 slowest:
+      9.53s  tests\hermes_cli\test_kanban_decompose_db.py
+
+=== Failure output ===
+
+--- tests\hermes_cli\test_kanban_decompose_db.py ---
+============================= test session starts =============================
+platform win32 -- Python 3.11.16, pytest-9.1.1, pluggy-1.6.0 -- C:\Users\kevin\AppData\Local\hermes\hermes-agent\venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\kevin\AppData\Local\hermes\hermes-agent
+configfile: pyproject.toml
+plugins: anyio-4.15.0
+collecting ... collected 6 items
+
+tests/hermes_cli/test_kanban_decompose_db.py::test_decompose_creates_children_and_promotes_root PASSED [ 16%]
+tests/hermes_cli/test_kanban_decompose_db.py::test_decompose_records_audit_comment_and_event PASSED [ 33%]
+tests/hermes_cli/test_kanban_decompose_db.py::test_decompose_preserves_external_prerequisites_across_the_workgraph FAILED [ 50%]
+tests/hermes_cli/test_kanban_decompose_db.py::test_nested_decompose_preserves_transitive_external_prerequisites FAILED [ 66%]
+tests/hermes_cli/test_kanban_decompose_db.py::test_decompose_without_external_prerequisites_keeps_entry_parent_free PASSED [ 83%]
+tests/hermes_cli/test_kanban_decompose_db.py::test_decompose_auto_promote_false_keeps_inherited_entries_in_todo FAILED [100%]
+
+================================== FAILURES ===================================
+____ test_decompose_preserves_external_prerequisites_across_the_workgraph _____
+
+kanban_home = WindowsPath('C:/Users/kevin/AppData/Local/Temp/hermes-pytest-tmproot-b27d8gs0/pytest-of-unknown/pytest-0/test_decompose_preserves_exter0/.hermes')
+
+    def test_decompose_preserves_external_prerequisites_across_the_workgraph(kanban_home):
+        with kbc.connect() as conn:
+            prerequisite_a = kb.create_task(conn, title="planning approval A")
+            prerequisite_b = kb.create_task(conn, title="planning approval B")
+            root = _create_triage(conn, title="coarse roadmap card")
+            kb.link_tasks(conn, prerequisite_a, root)
+            kb.link_tasks(conn, prerequisite_b, root)
+            downstream = kb.create_task(conn, title="release", parents=[root])
+    
+            child_ids = kb.decompose_triage_task(
+                conn,
+                root,
+                root_assignee="orchestrator",
+                children=[
+                    {"title": "parallel entry A", "assignee": "worker-a", "parents": []},
+                    {"title": "parallel entry B", "assignee": "worker-b", "parents": []},
+                    {"title": "dependent", "assignee": "worker-c", "parents": [0, 1]},
+                ],
+            )
+            assert child_ids is not None
+            entry_a, entry_b, dependent = child_ids
+    
+            assert set(kb.parent_ids(conn, root)) == {
+                prerequisite_a,
+                prerequisite_b,
+                entry_a,
+                entry_b,
+                dependent,
+            }
+>           assert set(kb.parent_ids(conn, entry_a)) == {prerequisite_a, prerequisite_b}
+E           AssertionError: assert set() == {'t_3d300768', 't_5c38b325'}
+E             
+E             Extra items in the right set:
+E             't_5c38b325'
+E             't_3d300768'
+E             
+E             Full diff:
+E             + set()...
+E             
+E             ...Full output truncated (4 lines hidden), use '-vv' to show
+
+tests\hermes_cli\test_kanban_decompose_db.py:121: AssertionError
+______ test_nested_decompose_preserves_transitive_external_prerequisites ______
+
+kanban_home = WindowsPath('C:/Users/kevin/AppData/Local/Temp/hermes-pytest-tmproot-b27d8gs0/pytest-of-unknown/pytest-0/test_nested_decompose_preserve0/.hermes')
+
+    def test_nested_decompose_preserves_transitive_external_prerequisites(kanban_home):
+        with kbc.connect() as conn:
+            prerequisite = kb.create_task(conn, title="programme approval")
+            root = _create_triage(conn, title="programme")
+            kb.link_tasks(conn, prerequisite, root)
+            first_level = kb.decompose_triage_task(
+                conn,
+                root,
+                root_assignee="orchestrator",
+                children=[{"title": "coarse child", "assignee": "planner", "parents": []}],
+            )
+            assert first_level is not None
+            coarse_child = first_level[0]
+            with kb.write_txn(conn):
+                conn.execute("UPDATE tasks SET status = 'triage' WHERE id = ?", (coarse_child,))
+    
+            nested = kb.decompose_triage_task(
+                conn,
+                coarse_child,
+                root_assignee="planner",
+                children=[
+                    {"title": "nested entry", "assignee": "worker", "parents": []},
+                    {"title": "nested dependent", "assignee": "worker", "parents": [0]},
+                ],
+            )
+            assert nested is not None
+            nested_entry, nested_dependent = nested
+    
+>           assert kb.parent_ids(conn, nested_entry) == [prerequisite]
+E           AssertionError: assert [] == ['t_4b9fa7d9']
+E             
+E             Right contains one more item: 't_4b9fa7d9'
+E             
+E             Full diff:
+E             + []
+E             - [
+E             -     't_4b9fa7d9',
+E             - ]
+
+tests\hermes_cli\test_kanban_decompose_db.py:197: AssertionError
+______ test_decompose_auto_promote_false_keeps_inherited_entries_in_todo ______
+
+kanban_home = WindowsPath('C:/Users/kevin/AppData/Local/Temp/hermes-pytest-tmproot-b27d8gs0/pytest-of-unknown/pytest-0/test_decompose_auto_promote_fa0/.hermes')
+
+    def test_decompose_auto_promote_false_keeps_inherited_entries_in_todo(kanban_home):
+        with kbc.connect() as conn:
+            prerequisite = kb.create_task(conn, title="completed approval")
+            assert kb.complete_task(conn, prerequisite)
+            root = _create_triage(conn)
+            kb.link_tasks(conn, prerequisite, root)
+    
+            child_ids = kb.decompose_triage_task(
+                conn,
+                root,
+                root_assignee="orchestrator",
+                children=[{"title": "manual-review entry", "assignee": "worker", "parents": []}],
+                auto_promote=False,
+            )
+            assert child_ids is not None
+            entry = child_ids[0]
+    
+>           assert kb.parent_ids(conn, entry) == [prerequisite]
+E           AssertionError: assert [] == ['t_2442a046']
+E             
+E             Right contains one more item: 't_2442a046'
+E             
+E             Full diff:
+E             + []
+E             - [
+E             -     't_2442a046',
+E             - ]
+
+tests\hermes_cli\test_kanban_decompose_db.py:245: AssertionError
+------------------------------ Captured log call ------------------------------
+INFO     hermes_cli.plugins:plugins.py:371 Plugin 'browser-browser-use' registered browser provider: browser-use
+INFO     hermes_cli.plugins:plugins.py:371 Plugin 'browser-browserbase' registered browser provider: browserbase
+INFO     hermes_cli.plugins:plugins.py:371 Plugin 'browser-firecrawl' registered browser provider: firecrawl
+INFO     hermes_cli.plugins:plugins.py:371 Plugin 'deepinfra' registered image_gen provider: deepinfra
+INFO     hermes_cli.plugins:plugins.py:371 Plugin 'fal' registered image_gen provider: fal
+INFO     hermes_cli.plugins:plugins.py:371 Plugin 'krea' registered image_gen provider: krea
+INFO     hermes_cli.plugins:plugins.py:371 Plugin 'meta-ai-image-gen' registered image_gen provider: meta-ai
+INFO     hermes_cli.plugins:plugins.py:371 Plugin 'openai' registered image_gen provider: openai
+INFO     hermes_cli.plugins:plugins.py:371 Plugin 'openai-codex' registered image_gen provider: openai-codex
+INFO     hermes_cli.plugins:plugins.py:371 Plugin 'openrouter' registered image_gen provider: openrouter
+INFO     hermes_cli.plugins:plugins.py:371 Plugin 'openrouter' registered image_gen provider: nous
+INFO     hermes_cli.plugins:plugins.py:371 Plugin 'xai' registered image_gen provider: xai
+INFO     hermes_cli.plugins:plugins.py:371 Plugin 'deepinfra' registered video_gen provider: deepinfra
+INFO     hermes_cli.plugins:plugins.py:371 Plugin 'fal' registered video_gen provider: fal
+INFO     hermes_cli.plugins:plugins.py:371 Plugin 'xai' registered video_gen provider: xai
+INFO     hermes_cli.plugins:plugins.py:371 Plugin 'web-brave-free' registered web provider: brave-free
+INFO     hermes_cli.plugins:plugins.py:371 Plugin 'web-ddgs' registered web provider: ddgs
+INFO     hermes_cli.plugins:plugins.py:371 Plugin 'web-exa' registered web provider: exa
+INFO     hermes_cli.plugins:plugins.py:371 Plugin 'web-firecrawl' registered web provider: firecrawl
+INFO     hermes_cli.plugins:plugins.py:371 Plugin 'web-keenable' registered web provider: keenable
+INFO     hermes_cli.plugins:plugins.py:371 Plugin 'web-parallel' registered web provider: parallel
+INFO     hermes_cli.plugins:plugins.py:371 Plugin 'web-perplexity' registered web provider: perplexity
+INFO     hermes_cli.plugins:plugins.py:371 Plugin 'web-searxng' registered web provider: searxng
+INFO     hermes_cli.plugins:plugins.py:371 Plugin 'web-tavily' registered web provider: tavily
+INFO     hermes_cli.plugins:plugins.py:371 Plugin 'web-xai' registered web provider: xai
+INFO     hermes_cli.plugins:plugins.py:1308 Plugin discovery complete: 57 found, 51 enabled
+=========================== short test summary info ===========================
+FAILED tests/hermes_cli/test_kanban_decompose_db.py::test_decompose_preserves_external_prerequisites_across_the_workgraph
+FAILED tests/hermes_cli/test_kanban_decompose_db.py::test_nested_decompose_preserves_transitive_external_prerequisites
+FAILED tests/hermes_cli/test_kanban_decompose_db.py::test_decompose_auto_promote_false_keeps_inherited_entries_in_todo
+========================= 3 failed, 3 passed in 2.25s =========================
+
+=== 1 file with test failures (3 tests failed) ===
+  tests\hermes_cli\test_kanban_decompose_db.py  (3 tests failed)

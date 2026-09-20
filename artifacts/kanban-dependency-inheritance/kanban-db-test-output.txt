@@ -1,0 +1,259 @@
+▶ running per-file parallel test suite via run_tests_parallel.py
+  (TZ=UTC LANG=C.UTF-8 PYTHONHASHSEED=0; clean env)
+▶ pre-compiling bytecode cache
+▶ launching test runner
+Discovered 1 test files (~32 tests) under ['tests\\hermes_cli\\test_kanban_db.py']; running with -j 48
+[100.0% |    32/~32 | ✓29 | ✗ 3] ✗ tests\hermes_cli\test_kanban_db.py (29✓ 3✗, 24.8s)
+
+  ╔╍ Failed: tests\hermes_cli\test_kanban_db.py ╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+  ║         `hermes` package). Regression for #23198: the original PR shipped
+  ║         `python -m hermes` which fails with `No module named hermes` on every
+  ║         invocation.
+  ║         """
+  ║         import shutil
+  ║         import sys
+  ║         import hermes_cli.kanban_db as kb
+  ║         from hermes_cli import kanban_db_dispatch as kbd
+  ║     
+  ║         monkeypatch.delenv("HERMES_BIN", raising=False)
+  ║         monkeypatch.setattr(shutil, "which", lambda name: None)
+  ║         argv = kbd._resolve_hermes_argv()
+  ║ >       assert argv == [sys.executable, "-m", "hermes_cli.main"]
+  ║ E       AssertionError: assert ['C:\\Users\\...\\hermes.EXE'] == ['C:\\Users\\...mes_cli.main']
+  ║ E         
+  ║ E         At index 0 diff: 'C:\\Users\\kevin\\AppData\\Local\\hermes\\hermes-agent\\venv\\Scripts\\hermes.EXE' != 'C:\\Users\\kevin\\AppData\\Local\\hermes\\hermes-agent\\venv\\Scripts\\python.exe'
+  ║ E         Right contains 2 more items, first extra item: '-m'
+  ║ E         
+  ║ E         Full diff:
+  ║ E           [
+  ║ E         -     'C:\\Users\\kevin\\AppData\\Local\\hermes\\hermes-agent\\venv\\Scripts\\python.exe',...
+  ║ E         
+  ║ E         ...Full output truncated (6 lines hidden), use '-vv' to show
+  ║ 
+  ║ tests\hermes_cli\test_kanban_db.py:1201: AssertionError
+  ║ =========================== short test summary info ===========================
+  ║ FAILED tests/hermes_cli/test_kanban_db.py::test_rate_limit_exit_requeues_without_counting_failure
+  ║ FAILED tests/hermes_cli/test_kanban_db.py::test_worktree_workspace_explicit_target_materializes_linked_worktree
+  ║ FAILED tests/hermes_cli/test_kanban_db.py::test_resolve_hermes_argv_falls_back_to_module_form_when_no_path_shim
+  ║ ======================== 3 failed, 29 passed in 9.86s =========================
+  ║
+  ║  Repro: python -m pytest tests\hermes_cli\test_kanban_db.py -v
+  ╚╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+
+
+=== Summary: 1 files, 29 tests passed, 3 failed (100% complete) in 24.9s (48 workers) ===
+  Durations cached to test_durations.json (1 files)
+
+=== Per-file subprocess time distribution ===
+  Files:   1
+  Total subprocess CPU-wall: 24.8s  (runner wall: 24.9s, parallelism: 48x)
+  P50: 24.84s  P90: 24.84s  P95: 24.84s  P99: 24.84s  Max: 24.84s
+  <1s: 0 files (0%)  <2s: 0 files (0%)
+  Top 10 slowest:
+     24.84s  tests\hermes_cli\test_kanban_db.py
+
+=== Failure output ===
+
+--- tests\hermes_cli\test_kanban_db.py ---
+============================= test session starts =============================
+platform win32 -- Python 3.11.16, pytest-9.1.1, pluggy-1.6.0 -- C:\Users\kevin\AppData\Local\hermes\hermes-agent\venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\kevin\AppData\Local\hermes\hermes-agent
+configfile: pyproject.toml
+plugins: anyio-4.15.0
+collecting ... collected 32 items
+
+tests/hermes_cli/test_kanban_db.py::test_cross_process_init_lock_uses_windows_byte_range_lock PASSED [  3%]
+tests/hermes_cli/test_kanban_db.py::test_connect_migrates_legacy_db_before_optional_column_indexes PASSED [  6%]
+tests/hermes_cli/test_kanban_db.py::test_schedule_task_parks_time_delay_without_dispatching PASSED [  9%]
+tests/hermes_cli/test_kanban_db.py::test_stale_claim_reclaim_event_records_diagnostic_payload PASSED [ 12%]
+tests/hermes_cli/test_kanban_db.py::test_rate_limit_exit_requeues_without_counting_failure FAILED [ 15%]
+tests/hermes_cli/test_kanban_db.py::test_respawn_guard_defers_rate_limited_within_cooldown PASSED [ 18%]
+tests/hermes_cli/test_kanban_db.py::test_recompute_ready_honours_dispatcher_failure_limit PASSED [ 21%]
+tests/hermes_cli/test_kanban_db.py::test_delete_archived_task_removes_related_rows PASSED [ 25%]
+tests/hermes_cli/test_kanban_db.py::test_delete_task_removes_task_and_cascades PASSED [ 28%]
+tests/hermes_cli/test_kanban_db.py::test_worktree_workspace_explicit_target_materializes_linked_worktree FAILED [ 31%]
+tests/hermes_cli/test_kanban_db.py::test_complete_task_persists_scratch_artifacts_before_cleanup PASSED [ 34%]
+tests/hermes_cli/test_kanban_db.py::test_dir_child_completion_unblocks_deferred_scratch_parent PASSED [ 37%]
+tests/hermes_cli/test_kanban_db.py::test_is_managed_scratch_path_rejects_kanban_metadata_subtrees PASSED [ 40%]
+tests/hermes_cli/test_kanban_db.py::TestSharedBoardPaths::test_profile_worker_resolves_to_shared_root PASSED [ 43%]
+tests/hermes_cli/test_kanban_db.py::TestSharedBoardPaths::test_dispatcher_and_worker_share_a_real_database PASSED [ 46%]
+tests/hermes_cli/test_kanban_db.py::TestSharedBoardPaths::test_dispatcher_spawn_injects_kanban_paths_without_stale_session PASSED [ 50%]
+tests/hermes_cli/test_kanban_db.py::test_connect_falls_back_to_delete_on_locking_protocol PASSED [ 53%]
+tests/hermes_cli/test_kanban_db.py::test_connect_works_when_wal_is_silently_refused PASSED [ 56%]
+tests/hermes_cli/test_kanban_db.py::test_sqlite_connect_closes_tracked_conn_on_setup_failure PASSED [ 59%]
+tests/hermes_cli/test_kanban_db.py::test_unlink_tasks_triggers_recompute_ready PASSED [ 62%]
+tests/hermes_cli/test_kanban_db.py::test_add_column_if_missing_is_idempotent_on_race PASSED [ 65%]
+tests/hermes_cli/test_kanban_db.py::test_migrate_add_optional_columns_tolerates_concurrent_migration PASSED [ 68%]
+tests/hermes_cli/test_kanban_db.py::test_resolve_hermes_argv_falls_back_to_module_form_when_no_path_shim FAILED [ 71%]
+tests/hermes_cli/test_kanban_db.py::test_resolve_hermes_argv_module_actually_runs PASSED [ 75%]
+tests/hermes_cli/test_kanban_db.py::test_dispatch_max_in_progress_blocks_review_when_at_limit PASSED [ 78%]
+tests/hermes_cli/test_kanban_db.py::test_repeated_corrupt_open_reuses_single_backup PASSED [ 81%]
+tests/hermes_cli/test_kanban_db.py::test_locked_healthy_db_does_not_classify_as_corrupt PASSED [ 84%]
+tests/hermes_cli/test_kanban_db.py::test_maybe_emit_scratch_tip_fires_once_per_install PASSED [ 87%]
+tests/hermes_cli/test_kanban_db.py::test_connect_sets_secure_delete_on PASSED [ 90%]
+tests/hermes_cli/test_kanban_db.py::test_write_txn_preserves_original_exception_when_rollback_fails PASSED [ 93%]
+tests/hermes_cli/test_kanban_db.py::test_write_txn_check_reads_correct_header_fields PASSED [ 96%]
+tests/hermes_cli/test_kanban_db.py::test_bare_connect_does_not_close_on_context_exit PASSED [100%]
+
+================================== FAILURES ===================================
+___________ test_rate_limit_exit_requeues_without_counting_failure ____________
+
+kanban_home = WindowsPath('C:/Users/kevin/AppData/Local/Temp/hermes-pytest-tmproot-rd2zzeyb/pytest-of-unknown/pytest-0/test_rate_limit_exit_requeues_0/.hermes')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001C317592250>
+
+    def test_rate_limit_exit_requeues_without_counting_failure(
+        kanban_home, monkeypatch,
+    ):
+        """A rate-limit sentinel exit releases the task to ``ready`` and leaves
+        ``consecutive_failures`` untouched — the breaker must never trip on a
+        transient throttle, even across many quota-wall hits."""
+        import hermes_cli.kanban_db as _kb
+        from hermes_cli import kanban_db_dispatch as _kbd
+    
+        monkeypatch.setattr(_kb, "_pid_alive", lambda _pid: False)
+        monkeypatch.setenv("HERMES_KANBAN_CRASH_GRACE_SECONDS", "0")
+    
+        with kbc.connect() as conn:
+            host = _kb._claimer_id().split(":", 1)[0]
+            tid = kb.create_task(conn, title="rl", assignee="a")
+    
+            # Simulate FAR more quota-wall hits than DEFAULT_FAILURE_LIMIT (2).
+            # If any of these counted as a failure the task would be blocked.
+            for i in range(6):
+                pid = 70000 + i
+                # Claim to open a real run (so detect_crashed_workers can close
+                # it with a rate_limited outcome), then point the claim at this
+                # host + a dead pid so the crash path acts on it.
+                kb.claim_task(conn, tid, claimer=f"{host}:w{i}")
+                conn.execute(
+                    "UPDATE tasks SET worker_pid=?, consecutive_failures=? "
+                    "WHERE id=?",
+                    (pid, 0, tid),
+                )
+                conn.commit()
+                _kbd._record_worker_exit(
+                    pid, _exited_status(_kb.KANBAN_RATE_LIMIT_EXIT_CODE)
+                )
+    
+                crashed = kbd.detect_crashed_workers(conn)
+                # Rate-limited requeues are NOT crashes.
+>               assert tid not in crashed
+E               AssertionError: assert 't_e1999fdf' not in ['t_e1999fdf']
+
+tests\hermes_cli\test_kanban_db.py:307: AssertionError
+------------------------------ Captured log call ------------------------------
+INFO     hermes_cli.plugins:plugins.py:371 Plugin 'browser-browser-use' registered browser provider: browser-use
+INFO     hermes_cli.plugins:plugins.py:371 Plugin 'browser-browserbase' registered browser provider: browserbase
+INFO     hermes_cli.plugins:plugins.py:371 Plugin 'browser-firecrawl' registered browser provider: firecrawl
+INFO     hermes_cli.plugins:plugins.py:371 Plugin 'deepinfra' registered image_gen provider: deepinfra
+INFO     hermes_cli.plugins:plugins.py:371 Plugin 'fal' registered image_gen provider: fal
+INFO     hermes_cli.plugins:plugins.py:371 Plugin 'krea' registered image_gen provider: krea
+INFO     hermes_cli.plugins:plugins.py:371 Plugin 'meta-ai-image-gen' registered image_gen provider: meta-ai
+INFO     hermes_cli.plugins:plugins.py:371 Plugin 'openai' registered image_gen provider: openai
+INFO     hermes_cli.plugins:plugins.py:371 Plugin 'openai-codex' registered image_gen provider: openai-codex
+INFO     hermes_cli.plugins:plugins.py:371 Plugin 'openrouter' registered image_gen provider: openrouter
+INFO     hermes_cli.plugins:plugins.py:371 Plugin 'openrouter' registered image_gen provider: nous
+INFO     hermes_cli.plugins:plugins.py:371 Plugin 'xai' registered image_gen provider: xai
+INFO     hermes_cli.plugins:plugins.py:371 Plugin 'deepinfra' registered video_gen provider: deepinfra
+INFO     hermes_cli.plugins:plugins.py:371 Plugin 'fal' registered video_gen provider: fal
+INFO     hermes_cli.plugins:plugins.py:371 Plugin 'xai' registered video_gen provider: xai
+INFO     hermes_cli.plugins:plugins.py:371 Plugin 'web-brave-free' registered web provider: brave-free
+INFO     hermes_cli.plugins:plugins.py:371 Plugin 'web-ddgs' registered web provider: ddgs
+INFO     hermes_cli.plugins:plugins.py:371 Plugin 'web-exa' registered web provider: exa
+INFO     hermes_cli.plugins:plugins.py:371 Plugin 'web-firecrawl' registered web provider: firecrawl
+INFO     hermes_cli.plugins:plugins.py:371 Plugin 'web-keenable' registered web provider: keenable
+INFO     hermes_cli.plugins:plugins.py:371 Plugin 'web-parallel' registered web provider: parallel
+INFO     hermes_cli.plugins:plugins.py:371 Plugin 'web-perplexity' registered web provider: perplexity
+INFO     hermes_cli.plugins:plugins.py:371 Plugin 'web-searxng' registered web provider: searxng
+INFO     hermes_cli.plugins:plugins.py:371 Plugin 'web-tavily' registered web provider: tavily
+INFO     hermes_cli.plugins:plugins.py:371 Plugin 'web-xai' registered web provider: xai
+INFO     hermes_cli.plugins:plugins.py:1308 Plugin discovery complete: 57 found, 51 enabled
+____ test_worktree_workspace_explicit_target_materializes_linked_worktree _____
+
+kanban_home = WindowsPath('C:/Users/kevin/AppData/Local/Temp/hermes-pytest-tmproot-rd2zzeyb/pytest-of-unknown/pytest-0/test_worktree_workspace_explic0/.hermes')
+tmp_path = WindowsPath('C:/Users/kevin/AppData/Local/Temp/hermes-pytest-tmproot-rd2zzeyb/pytest-of-unknown/pytest-0/test_worktree_workspace_explic0')
+
+    def test_worktree_workspace_explicit_target_materializes_linked_worktree(kanban_home, tmp_path):
+        repo = tmp_path / "repo"
+        _init_git_repo(repo)
+        target = repo / ".worktrees" / "custom-task"
+        branch = "wt/custom-task"
+        with kbc.connect() as conn:
+            t = kb.create_task(
+                conn,
+                title="ship",
+                workspace_kind="worktree",
+                workspace_path=str(target),
+                branch_name=branch,
+            )
+            task = kb.get_task(conn, t)
+            assert task is not None
+            ws = kbw.resolve_workspace(task)
+    
+        assert ws == target
+        assert ws.exists()
+        repo_common = subprocess.run(
+            ["git", "-C", str(repo), "rev-parse", "--path-format=absolute", "--git-common-dir"],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+        ws_common = subprocess.run(
+            ["git", "-C", str(ws), "rev-parse", "--path-format=absolute", "--git-common-dir"],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+        assert ws_common == repo_common
+        listed = subprocess.run(
+            ["git", "-C", str(repo), "worktree", "list", "--porcelain"],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout
+>       assert f"worktree {target}" in listed
+E       AssertionError: assert 'worktree C:\\Users\\kevin\\AppData\\Local\\Temp\\hermes-pytest-tmproot-rd2zzeyb\\pytest-of-unknown\\pytest-0\\test_worktree_workspace_explic0\\repo\\.worktrees\\custom-task' in 'worktree C:/Users/kevin/AppData/Local/Temp/hermes-pytest-tmproot-rd2zzeyb/pytest-of-unknown/pytest-0/test_worktree_workspace_explic0/repo\nHEAD 3141811ca5b31e220fa70d1e791fa1f9063ea2ec\nbranch refs/heads/main\n\nworktree C:/Users/kevin/AppData/Local/Temp/hermes-pytest-tmproot-rd2zzeyb/pytest-of-unknown/pytest-0/test_worktree_workspace_explic0/repo/.worktrees/custom-task\nHEAD 3141811ca5b31e220fa70d1e791fa1f9063ea2ec\nbranch refs/heads/wt/custom-task\n\n'
+
+tests\hermes_cli\test_kanban_db.py:574: AssertionError
+____ test_resolve_hermes_argv_falls_back_to_module_form_when_no_path_shim _____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001C31499D350>
+
+    def test_resolve_hermes_argv_falls_back_to_module_form_when_no_path_shim(monkeypatch):
+        """When the shim is not on PATH, fall back to `python -m hermes_cli.main`.
+    
+        Pins the correct module name (NOT `hermes` — there is no top-level
+        `hermes` package). Regression for #23198: the original PR shipped
+        `python -m hermes` which fails with `No module named hermes` on every
+        invocation.
+        """
+        import shutil
+        import sys
+        import hermes_cli.kanban_db as kb
+        from hermes_cli import kanban_db_dispatch as kbd
+    
+        monkeypatch.delenv("HERMES_BIN", raising=False)
+        monkeypatch.setattr(shutil, "which", lambda name: None)
+        argv = kbd._resolve_hermes_argv()
+>       assert argv == [sys.executable, "-m", "hermes_cli.main"]
+E       AssertionError: assert ['C:\\Users\\...\\hermes.EXE'] == ['C:\\Users\\...mes_cli.main']
+E         
+E         At index 0 diff: 'C:\\Users\\kevin\\AppData\\Local\\hermes\\hermes-agent\\venv\\Scripts\\hermes.EXE' != 'C:\\Users\\kevin\\AppData\\Local\\hermes\\hermes-agent\\venv\\Scripts\\python.exe'
+E         Right contains 2 more items, first extra item: '-m'
+E         
+E         Full diff:
+E           [
+E         -     'C:\\Users\\kevin\\AppData\\Local\\hermes\\hermes-agent\\venv\\Scripts\\python.exe',...
+E         
+E         ...Full output truncated (6 lines hidden), use '-vv' to show
+
+tests\hermes_cli\test_kanban_db.py:1201: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/hermes_cli/test_kanban_db.py::test_rate_limit_exit_requeues_without_counting_failure
+FAILED tests/hermes_cli/test_kanban_db.py::test_worktree_workspace_explicit_target_materializes_linked_worktree
+FAILED tests/hermes_cli/test_kanban_db.py::test_resolve_hermes_argv_falls_back_to_module_form_when_no_path_shim
+======================== 3 failed, 29 passed in 9.86s =========================
+
+=== 1 file with test failures (3 tests failed) ===
+  tests\hermes_cli\test_kanban_db.py  (3 tests failed)

@@ -1,0 +1,12 @@
+E         Right contains 2 more items, first extra item: '-m'
+E         Use -v to get more diff
+
+tests\hermes_cli\test_kanban_db.py:1201: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/hermes_cli/test_kanban_db.py::test_rate_limit_exit_requeues_without_counting_failure
+FAILED tests/hermes_cli/test_kanban_db.py::test_worktree_workspace_explicit_target_materializes_linked_worktree
+FAILED tests/hermes_cli/test_kanban_db.py::test_resolve_hermes_argv_falls_back_to_module_form_when_no_path_shim
+====================== 3 failed, 29 deselected in 2.40s =======================
+
+=== 1 file with test failures (3 tests failed) ===
+  tests\hermes_cli\test_kanban_db.py  (3 tests failed)

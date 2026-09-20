@@ -3550,6 +3550,16 @@ def decompose_triage_task(
         ).fetchone()
         if root_row is None or root_row["status"] != "triage":
             return None
+        # Snapshot the root's pre-existing prerequisites before any generated
+        # child is linked back to it. Entry children inherit these holds so
+        # decomposition cannot make work claimable earlier than the root was.
+        external_parent_ids = [
+            row["parent_id"]
+            for row in conn.execute(
+                "SELECT parent_id FROM task_links WHERE child_id = ? ORDER BY parent_id",
+                (task_id,),
+            ).fetchall()
+        ]
         child_ids = [
             _insert_decomposed_child(conn, task_id, root_row, child, author, now)
             for child in children
@@ -3560,6 +3570,20 @@ def decompose_triage_task(
                 parent_id, child_id = child_ids[p_idx], child_ids[idx]
                 _link(conn, parent_id, child_id)
                 _append_event(conn, child_id, "linked", {"parent": parent_id, "child": child_id})
+        # Only graph entries need the external holds; their descendants remain
+        # gated transitively by the sibling topology without creating cliques.
+        for idx, child in enumerate(children):
+            if child.get("parents"):
+                continue
+            child_id = child_ids[idx]
+            for parent_id in external_parent_ids:
+                _link(conn, parent_id, child_id)
+                _append_event(
+                    conn,
+                    child_id,
+                    "linked",
+                    {"parent": parent_id, "child": child_id, "inherited_from": task_id},
+                )
         # Root waits for the whole graph: link it under EVERY child (simpler
         # than computing leaves; cycle-free since the root is only ever a child).
         for cid in child_ids:

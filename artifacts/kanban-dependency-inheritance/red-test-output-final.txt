@@ -1,0 +1,10 @@
+  ║ FAILED tests/hermes_cli/test_kanban_decompose_db.py::test_decompose_preserves_external_prerequisites_across_the_workgraph
+  ║ FAILED tests/hermes_cli/test_kanban_decompose_db.py::test_nested_decompose_preserves_transitive_external_prerequisites
+  ║ FAILED tests/hermes_cli/test_kanban_decompose_db.py::test_decompose_auto_promote_false_keeps_inherited_entries_in_todo
+  ║ ========================= 3 failed, 3 passed in 2.31s =========================
+=== Summary: 1 files, 3 tests passed, 3 failed (100% complete) in 9.1s (48 workers) ===
+FAILED tests/hermes_cli/test_kanban_decompose_db.py::test_decompose_preserves_external_prerequisites_across_the_workgraph
+FAILED tests/hermes_cli/test_kanban_decompose_db.py::test_nested_decompose_preserves_transitive_external_prerequisites
+FAILED tests/hermes_cli/test_kanban_decompose_db.py::test_decompose_auto_promote_false_keeps_inherited_entries_in_todo
+========================= 3 failed, 3 passed in 2.31s =========================
+=== 1 file with test failures (3 tests failed) ===

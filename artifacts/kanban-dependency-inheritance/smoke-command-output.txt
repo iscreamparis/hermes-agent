@@ -1,0 +1,4 @@
+PASS: C:\Users\kevin\AppData\Local\hermes\hermes-agent\artifacts\kanban-dependency-inheritance\proof.json
+PASS: C:\Users\kevin\AppData\Local\hermes\hermes-agent\artifacts\kanban-dependency-inheritance\proof.txt
+PASS: C:\Users\kevin\AppData\Local\hermes\hermes-agent\artifacts\kanban-dependency-inheritance\proof.json
+PASS: C:\Users\kevin\AppData\Local\hermes\hermes-agent\artifacts\kanban-dependency-inheritance\proof.txt

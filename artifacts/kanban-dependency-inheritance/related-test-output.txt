@@ -1,0 +1,23 @@
+▶ running per-file parallel test suite via run_tests_parallel.py
+  (TZ=UTC LANG=C.UTF-8 PYTHONHASHSEED=0; clean env)
+▶ pre-compiling bytecode cache
+▶ launching test runner
+Discovered 4 test files (~15 tests) under ['tests\\hermes_cli\\test_kanban_decompose.py', 'tests\\hermes_cli\\test_kanban_decompose_db.py', 'tests\\hermes_cli\\test_kanban_parent_reopen_invalidation.py', 'tests\\hermes_cli\\test_kanban_worktree_isolation.py']; running with -j 48
+[ 20.0% |     3/~15 | ✓3 | ✗0] ✓ tests\hermes_cli\test_kanban_decompose.py (3✓, 4.1s)
+[ 33.3% |     5/~15 | ✓5 | ✗0] ✓ tests\hermes_cli\test_kanban_worktree_isolation.py (2✓, 4.5s)
+[ 73.3% |    11/~15 | ✓11 | ✗ 0] ✓ tests\hermes_cli\test_kanban_decompose_db.py (6✓, 6.0s)
+[100.0% |    15/~15 | ✓15 | ✗ 0] ✓ tests\hermes_cli\test_kanban_parent_reopen_invalidation.py (4✓, 6.5s)
+
+=== Summary: 4 files, 15 tests passed, 0 failed (100% complete) in 6.5s (48 workers) ===
+  Durations cached to test_durations.json (4 files)
+
+=== Per-file subprocess time distribution ===
+  Files:   4
+  Total subprocess CPU-wall: 21.1s  (runner wall: 6.5s, parallelism: 48x)
+  P50: 5.97s  P90: 6.48s  P95: 6.48s  P99: 6.48s  Max: 6.48s
+  <1s: 0 files (0%)  <2s: 0 files (0%)
+  Top 10 slowest:
+      6.48s  tests\hermes_cli\test_kanban_parent_reopen_invalidation.py
+      5.97s  tests\hermes_cli\test_kanban_decompose_db.py
+      4.52s  tests\hermes_cli\test_kanban_worktree_isolation.py
+      4.14s  tests\hermes_cli\test_kanban_decompose.py
