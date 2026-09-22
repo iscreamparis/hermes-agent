@@ -105,6 +105,35 @@ class TestWindowsBehavior:
         assert "\u2192" in decoded
         assert "\U0001f680" in decoded
 
+    @pytest.mark.windows_only
+    def test_text_mode_pipe_decodes_utf8_child_output(self):
+        """A non-UTF-8-mode parent must not crash its reader thread on UTF-8 child
+        output: 0x90 (second byte of U+0410) is undefined in cp1252."""
+        _fresh_import()
+        script = "import sys; sys.stdout.buffer.write('\\u0410 \\u2014 caf\\u00e9'.encode('utf-8'))"
+        result = subprocess.run(
+            [sys.executable, "-c", script], capture_output=True, text=True, timeout=15,
+        )
+        assert result.stdout == "\u0410 \u2014 caf\u00e9"
+
+    @pytest.mark.windows_only
+    def test_explicit_encoding_is_respected(self):
+        _fresh_import()
+        script = "import sys; sys.stdout.buffer.write(b'\\xe9')"
+        result = subprocess.run(
+            [sys.executable, "-c", script], capture_output=True, text=True,
+            encoding="cp1252", timeout=15,
+        )
+        assert result.stdout == "\u00e9"
+
+    @pytest.mark.windows_only
+    def test_subprocess_patch_not_stacked_on_reimport(self):
+        _fresh_import()
+        _fresh_import()
+        init = subprocess.Popen.__init__
+        assert getattr(init, "_hermes_utf8_default", False)
+        assert not getattr(init.__wrapped__, "_hermes_utf8_default", False)
+
 
 class TestUserOptOut:
     """If the user has explicitly set PYTHONUTF8 / PYTHONIOENCODING in

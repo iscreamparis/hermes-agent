@@ -47,6 +47,53 @@ def apply_windows_utf8_bootstrap() -> bool:
     return True
 
 
+_subprocess_text_patched = False
+
+
+def patch_subprocess_text_decoding() -> bool:
+    """Default text-mode ``subprocess`` pipes to UTF-8 with ``errors="replace"`` on Windows.
+
+    The parent process usually starts WITHOUT UTF-8 mode (``PYTHONUTF8`` set above only
+    reaches children), so every ``Popen(..., text=True)`` lacking ``encoding=`` decodes via
+    ``locale.getencoding()`` = cp1252. A child emitting UTF-8 (``—`` = e2 80 94, ``А`` =
+    d0 90) then kills the ``_readerthread`` with ``UnicodeDecodeError: 'charmap' codec
+    can't decode byte 0x90`` and the call returns ``None`` output. Only calls that pass
+    neither ``encoding`` nor ``errors`` are touched; explicit choices win. Honors the
+    ``PYTHONUTF8=0`` opt-out. True only when the patch was applied this call.
+    """
+    global _subprocess_text_patched
+
+    if not _IS_WINDOWS or _subprocess_text_patched or os.environ.get("PYTHONUTF8") == "0":
+        return False
+    try:
+        import subprocess
+
+        original_init = subprocess.Popen.__init__
+        if getattr(original_init, "_hermes_utf8_default", False):
+            _subprocess_text_patched = True  # module re-imported; patch already live
+            return False
+
+        def _utf8_default_init(self, args, *pos, **kw):
+            # ``universal_newlines`` is also reachable positionally (index 10 after ``args``);
+            # ``encoding``/``errors``/``text`` are keyword-only.
+            if (
+                (kw.get("text") or kw.get("universal_newlines") or (len(pos) > 10 and pos[10]))
+                and kw.get("encoding") is None
+                and kw.get("errors") is None
+            ):
+                kw["encoding"] = "utf-8"
+                kw["errors"] = "replace"
+            original_init(self, args, *pos, **kw)
+
+        _utf8_default_init.__wrapped__ = original_init  # type: ignore[attr-defined]
+        _utf8_default_init._hermes_utf8_default = True  # type: ignore[attr-defined]
+        subprocess.Popen.__init__ = _utf8_default_init  # type: ignore[method-assign]
+    except Exception:
+        return False  # hardening only — never break an entry point
+    _subprocess_text_patched = True
+    return True
+
+
 def suppress_platform_ver_console() -> None:
     """Stub ``platform._syscmd_ver`` on Windows — decode-crash + console-flash guard.
 
@@ -115,5 +162,6 @@ def activate_durable_lazy_target() -> None:
 
 # Apply on import — entry points only need ``import hermes_bootstrap`` first.
 apply_windows_utf8_bootstrap()
+patch_subprocess_text_decoding()
 suppress_platform_ver_console()
 activate_durable_lazy_target()
